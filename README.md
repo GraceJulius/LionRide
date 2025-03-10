@@ -1,4 +1,4 @@
-# LincRide
+# LionRide
 
 LionRide is a ride-sharing web application tailored for Lincoln University students. This project aims to connect student drivers and riders, facilitating affordable and convenient transportation on campus.
 
