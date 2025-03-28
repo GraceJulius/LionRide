@@ -78,7 +78,7 @@ export default function Profile() {
 
       // Send the image to the backend
       const response = await fetch("/api/v1/users/profile/picture", {
-        method: "PUT", // Or POST, depending on your backend
+        method: "POST", 
         headers: {
           Authorization: `Bearer ${token}`,
         },
