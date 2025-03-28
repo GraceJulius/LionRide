@@ -1,87 +1,122 @@
-"use client"; // Required for Next.js App Router
+//updated to not consider otp verification for now
+
+"use client";
+
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { auth } from "../firebase/firebaseClient";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 
 export default function Signup() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [gender, setGender] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+  });
   const [error, setError] = useState("");
+  const router = useRouter();
 
-  // Function to validate email domain
-  const validateEmail = (email) => {
-    return /^[a-zA-Z0-9._%+-]+@lions\.lincoln\.edu$/.test(email);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email || !gender) {
-      setError("All fields are required!");
-      return;
-    }
-    if (!validateEmail(email)) {
-      setError("Please use your school email (@lions.lincoln.edu).");
+    const { firstName, lastName, email, password, phoneNumber } = formData;
+
+    // Ensure the email is from Lincoln University
+    if (!email.endsWith("@lincoln.edu") && !email.endsWith("@lions.lincoln.edu")) {
+      setError("Only Lincoln University email addresses are allowed.");
       return;
     }
 
-    alert("Signup successful!");
-    console.log("User Data:", { name, email, gender });
+    try {
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user); // Send email verification
+
+      const idToken = await userCredential.user.getIdToken();
+
+      // Register user in your backend
+      const response = await fetch("/api/v1/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ firstName, lastName, email, phoneNumber }),
+      });
+
+      if (!response.ok) throw new Error("Failed to register");
+
+      router.push("/login"); // Redirect to login page after signup
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-md shadow-lg w-96"
-      >
-        <h2 className="text-2xl font-bold text-center mb-4">Sign Up</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
+        <h1 className="text-2xl font-bold mb-4 text-center">Sign Up</h1>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        {error && <p className="text-red-500 text-sm text-center mb-3">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            name="firstName"
+            type="text"
+            placeholder="First Name"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <input
+            name="lastName"
+            type="text"
+            placeholder="Last Name"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="@lincoln.edu"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+          <input
+            name="phoneNumber"
+            type="tel"
+            placeholder="Phone Number"
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
 
-        {/* Name Field */}
-        <label className="block text-sm font-semibold mb-1">Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="border p-2 w-full rounded"
-          required
-        />
+          <button type="submit" className="w-full bg-orange-500 text-white px-4 py-2 rounded-md">
+            Sign Up
+          </button>
+        </form>
 
-        {/* Email Field */}
-        <label className="block text-sm font-semibold mt-3 mb-1">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 w-full rounded"
-          placeholder="@lions.lincoln.edu"
-          required
-        />
-
-        {/* Gender Dropdown */}
-        <label className="block text-sm font-semibold mt-3 mb-1">Gender</label>
-        <select
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          className="border p-2 w-full rounded"
-          required
-        >
-          <option value="">Select Gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-        </select>
-
-        {/* Sign Up Button */}
-        <button type="submit" className="bg-orange-500 text-white px-4 py-2 rounded w-full mt-4">
-          Sign Up
-        </button>
-
-        {/* Already have an account? */}
-        <p className="text-center text-sm mt-4">
-          Already have an account? <a href="/login" className="text-blue-500">Sign in</a>
+        <p className="text-center mt-4">
+          Already have an account?{" "}
+          <a href="/login" className="text-orange-500 hover:underline">
+            Sign in
+          </a>
         </p>
-      </form>
+      </div>
     </div>
   );
 }
