@@ -12,7 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Date;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -46,14 +47,14 @@ public class Driver {
     @Column(name = "driver_license_number", nullable = false)
     private String driverLicenseNumber;
 
-    @Column(name = "license_expiry", nullable = false)
-    private Date licenseExpiry;
+    @Column(name = "license_expiry", nullable = false, columnDefinition = "date")
+    private LocalDate licenseExpiry;
 
     @Column(name = "background_check_status", nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'Pending'")
     private String backgroundCheckStatus;
 
-    @Column(name = "average_rating", columnDefinition = "DECIMAL(3,2) DEFAULT 0.0")
-    private Double averageRating;
+    @Column(name = "average_rating", precision = 3, scale = 2, columnDefinition = "NUMERIC(3,2) DEFAULT 0.0")
+    private BigDecimal averageRating;
 
     @Column(name = "total_trips", columnDefinition = "INT DEFAULT 0")
     private Integer totalTrips;
