@@ -29,31 +29,38 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(HttpServletRequest request, @RequestBody Map<String, String> payload) {
         try {
-            // 1. Extract the Firebase ID token from the header.
             String authHeader = request.getHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(401).body("Missing or invalid Authorization header");
             }
             String idToken = authHeader.substring(7);
-
-            // 2. Verify the token using FirebaseAuthService.
             FirebaseToken decodedToken = firebaseAuthService.verifyIdToken(idToken);
-
-            // 3. Extract common user details from the token.
             String uid = decodedToken.getUid();
             String email = decodedToken.getEmail();
 
-            // 4. Parse additional profile details from the request body.
             String firstName = payload.get("firstName");
             String lastName = payload.get("lastName");
             String phoneNumber = payload.get("phoneNumber");
-            String userTypeString = payload.get("userType"); // expected values: "DRIVER" or "RIDER"
-            UserType userType = UserType.valueOf(userTypeString.toUpperCase());
+            String userTypeString = payload.get("userType"); // expected: "DRIVER" or "RIDER"
+            UserType newUserType = UserType.valueOf(userTypeString.toUpperCase());
 
-            // 5. Create or update the user record.
-            User user = userService.registerUser(uid, email, firstName, lastName, phoneNumber, userType);
-
-            // 6. Return a success response with the user object.
+            // Check if user already exists.
+            User existingUser = userService.getUser(uid);
+            User user;
+            if (existingUser != null) {
+                // If the roles differ, update to BOTH.
+                if (!existingUser.getUserType().equals(newUserType)) {
+                    existingUser.setUserType(UserType.BOTH);
+                }
+                // Update other details if needed.
+                existingUser.setFirstName(firstName);
+                existingUser.setLastName(lastName);
+                existingUser.setPhoneNumber(phoneNumber);
+                user = userService.updateUser(existingUser.getUid(), firstName, lastName, phoneNumber, existingUser.getUserType());
+            } else {
+                // No existing user, so register a new one.
+                user = userService.registerUser(uid, email, firstName, lastName, phoneNumber, newUserType);
+            }
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             e.printStackTrace();
