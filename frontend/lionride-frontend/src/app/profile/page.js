@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation"; // For redirecting on logout or token expiration
-import { Image } from "next/image";
+import Image from "next/image";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -24,7 +24,9 @@ export default function Profile() {
         }
 
         // Subtask 4.2: Send GET request with token in Authorization header
-        const response = await fetch("/api/v1/users/profile", {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const profileEndpoint = `${baseUrl}/api/v1/users/profile`;
+        const response = await fetch(profileEndpoint, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

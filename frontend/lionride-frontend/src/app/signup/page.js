@@ -40,13 +40,15 @@ export default function Signup() {
       const idToken = await userCredential.user.getIdToken();
 
       // Register user in your backend
-      const response = await fetch("/api/v1/users/register", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const registrationEndpoint = `${baseUrl}/api/v1/users/register`;
+      const response = await fetch(registrationEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ firstName, lastName, email, phoneNumber }),
+        body: JSON.stringify({ firstName, lastName, email, phoneNumber, userType: "RIDER" }),
       });
 
       if (!response.ok) throw new Error("Failed to register");
