@@ -24,11 +24,6 @@ import java.time.LocalDate;
 @Table(name = "drivers")
 public class Driver {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "driver_id")
-    private Integer driverId;
-
-    // Firebase UID (from Users table)
     @Column(name = "uid", nullable = false)
     private String uid;
 
