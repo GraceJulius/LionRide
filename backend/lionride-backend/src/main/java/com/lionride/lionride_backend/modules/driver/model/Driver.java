@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Getter
@@ -53,4 +52,10 @@ public class Driver {
 
     @Column(name = "total_trips", columnDefinition = "INT DEFAULT 0")
     private Integer totalTrips;
+
+    public Driver() {
+        this.backgroundCheckStatus = "Pending";
+        this.averageRating = BigDecimal.ZERO;
+        this.totalTrips = 0;
+    }
 }
