@@ -26,7 +26,7 @@ export default function Login() {
       // Store token securely (use context or HTTP-only cookies in production)
       localStorage.setItem("token", idToken);
 
-      router.push("/profile"); // Redirect after successful login
+      router.push("/driver/profile"); // Redirect after successful login
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     }
