@@ -138,7 +138,7 @@ export default function Profile() {
           className="w-20 h-20 rounded-full border-2 border-border object-cover"
         />
         <div className="profile-edit-overlay">
-          <span className="text-white text-xs text-center">Change Photo</span>
+          <span className="text-white text-xs text-center"> Photo</span>
         </div>
         <input
           type="file"
