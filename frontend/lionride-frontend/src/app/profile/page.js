@@ -133,7 +133,7 @@ export default function Profile() {
       </div>
       <div className="profile-avatar relative mx-auto mb-5 cursor-pointer w-fit" onClick={handleAvatarClick}>
         <Image
-          src={user.avatarUrl || ""}
+          src={user.avatarUrl || "/profileIcon.png"}
           alt="Profile Avatar"
           className="w-20 h-20 rounded-full border-2 border-border object-cover"
         />

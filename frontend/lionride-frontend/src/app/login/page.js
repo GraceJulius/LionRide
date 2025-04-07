@@ -25,8 +25,9 @@ export default function Login() {
       
       // Store token securely (use context or HTTP-only cookies in production)
       localStorage.setItem("token", idToken);
+      //changed it to redirect to the dashboard instead of profile
 
-      router.push("/profile"); // Redirect after successful login
+      router.push("/dashboard"); // Redirect after successful login
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     }
