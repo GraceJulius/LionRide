@@ -17,12 +17,16 @@ const mapContainerStyle = {
   height: "400px",
 };
 
+const defaultLocation = { lat: 39.809230, lng: -75.931694 };
+
 export default function Dashboard() {
   const router = useRouter();
   const [userLocation, setUserLocation] = useState(null);
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
-    const [rideHistory, setRideHistory] = useState([]);
+  const [rideHistory, setRideHistory] = useState([]);
+  const [locationError, setLocationError] = useState("");
+  const [error, setError] = useState(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -38,25 +42,53 @@ export default function Dashboard() {
   }, [router]);
 
   // Gets user location using the geolocation api on the browser
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          setUserLocation(coords);
-        
-          //trying to see how autofilling users location works
-        const results = await getGeocode({ location: coords });
-        const address = results[0]?.formatted_address;
-        if (address) setPickup(address);
-      },
-      (error) => console.error("Location error:", error)
-    );
-  }
-}, []);
+    useEffect(() => {
+        if (!isLoaded) return; // Wait for the API to load
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const coords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    setUserLocation(coords);
+
+                    // Check if the Google Maps API is ready before using getGeocode
+                    if (typeof window !== "undefined" && window.google && window.google.maps) {
+                        try {
+                            const results = await getGeocode({ location: coords });
+                            const address = results[0]?.formatted_address;
+                            if (address) setPickup(address);
+                        } catch (err) {
+                            console.error("Geocode error:", err);
+                        }
+                    }
+                },
+                (error) => {
+                    console.error("Location error:", error);
+                    setLocationError("Unable to retrieve your location; using default location.");
+                    // Set to default location if location access fails
+                    setUserLocation(defaultLocation);
+                    // Optionally, you can also set the default pickup address
+                    (async () => {
+                        if (typeof window !== "undefined" && window.google && window.google.maps) {
+                            try {
+                                const results = await getGeocode({ location: defaultLocation });
+                                const address = results[0]?.formatted_address;
+                                if (address) setPickup(address);
+                            } catch (err) {
+                                console.error("Geocode error for default location:", err);
+                            }
+                        }
+                    })();
+                }
+            );
+        } else {
+            setLocationError("Geolocation is not supported by your browser; using default location.");
+            setUserLocation(defaultLocation);
+        }
+    }, [isLoaded]);
 
     useEffect(() => {
         const fetchRideHistory = async () => {
