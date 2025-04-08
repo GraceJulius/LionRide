@@ -96,7 +96,7 @@ public class RideService {
 
     private BigDecimal calculateFare(Long distanceInMeters, Long durationInSeconds) {
         BigDecimal baseFare = new BigDecimal("5.00");
-        BigDecimal ratePerKm = new BigDecimal("1.50");
+        BigDecimal ratePerKm = new BigDecimal("0.50");
         BigDecimal ratePerMinute = new BigDecimal("0.25");
 
         BigDecimal distanceInKm = new BigDecimal(distanceInMeters)
@@ -120,5 +120,9 @@ public class RideService {
         ride.setStatus(status);
         ride.setUpdatedAt(LocalDateTime.now());
         return rideRepository.save(ride);
+    }
+
+    public List<Ride> getRideHistory(String riderUid) {
+        return rideRepository.findTop5ByRiderUidAndStatusOrderByCreatedAtDesc(riderUid, "Completed");
     }
 }

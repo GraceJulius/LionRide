@@ -52,12 +52,12 @@ export default function Navbar() {
       <div className="space-x-6 flex items-center">
         {isAuthenticated ? (
           <Link
-            href="/profile"
+            href="/dashboard"
             className={`font-bold hover:text-orange-500 ${
-              pathname === "/profile" ? "font-bold text-orange-600" : ""
+              pathname === "/dashboard" ? "font-bold text-orange-600" : ""
             }`}
           >
-            Profile
+            Dashboard
           </Link>
         ) : (
           <>

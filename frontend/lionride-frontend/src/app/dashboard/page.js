@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [userLocation, setUserLocation] = useState(null);
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
+    const [rideHistory, setRideHistory] = useState([]);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -57,11 +58,58 @@ export default function Dashboard() {
   }
 }, []);
 
-  const handleSeePrices = () => {
-    console.log("Pickup:", pickup);
-    console.log("Dropoff:", dropoff);
-    alert(`Searching prices for:\nFrom: ${pickup}\nTo: ${dropoff}`);
-  };
+    useEffect(() => {
+        const fetchRideHistory = async () => {
+            try {
+                // Assuming token is stored in localStorage as "token"
+                const token = localStorage.getItem("token");
+                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+                const response = await fetch(`${baseUrl}/api/v1/rides/history`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                    },
+                });
+                if (!response.ok) {
+                    console.error("Failed to fetch ride history");
+                    return;
+                }
+                const data = await response.json();
+                setRideHistory(data);
+            } catch (err) {
+                console.error("Error fetching ride history:", err);
+            }
+        };
+
+        fetchRideHistory();
+    }, []);
+
+    const handleSeePrices = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            const response = await fetch(`${baseUrl}/api/v1/rides/request`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    pickupAddress: pickup,
+                    destinationAddress: dropoff,
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error("Failed to get prices");
+            }
+            // Navigate to a confirmation page with the rideId in the URL
+            router.push(`/ride/${data.rideId}`);
+        } catch (err) {
+            console.error("Error requesting ride:", err);
+            setError(err.message);
+        }
+    };
 
   return (
     <div className="flex flex-col">
@@ -81,7 +129,6 @@ export default function Dashboard() {
   
       <div className="bg-white p-4">
         <h2 className="text-xl font-semibold mb-4 text-black">Get a ride</h2>
-  
         {isLoaded ? ( // render LocationInput only after Places API is ready
           <div className="flex flex-col gap-3">
             <LocationInput
@@ -111,6 +158,28 @@ export default function Dashboard() {
           <p className="text-gray-500">Loading location search...</p>
         )}
       </div>
+
+        {/* Ride History Section */}
+        <div className="bg-white p-4 mt-4">
+            <h2 className="text-xl font-semibold mb-4 text-black">Recent Rides</h2>
+            {rideHistory.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                    {rideHistory.map((ride) => (
+                        <div key={ride.rideId} className="p-4 border rounded-md shadow-md">
+                            <h3 className="text-lg font-semibold">Ride #{ride.rideId}</h3>
+                            <p><strong>From:</strong> {ride.pickupAddress}</p>
+                            <p><strong>To:</strong> {ride.destinationAddress}</p>
+                            <p><strong>Fare:</strong> ${ride.estimatedFare}</p>
+                            <p className="text-sm text-gray-500">
+                                {new Date(ride.createdAt).toLocaleString()}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p>No rides yet.</p>
+            )}
+        </div>
     </div>
   );
 }  
