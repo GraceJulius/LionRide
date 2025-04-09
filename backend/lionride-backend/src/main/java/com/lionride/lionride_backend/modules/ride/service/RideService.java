@@ -2,7 +2,9 @@ package com.lionride.lionride_backend.modules.ride.service;
 
 import com.lionride.lionride_backend.modules.ride.model.Ride;
 import com.lionride.lionride_backend.modules.ride.repository.RideRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -124,5 +126,32 @@ public class RideService {
 
     public List<Ride> getRideHistory(String riderUid) {
         return rideRepository.findTop5ByRiderUidAndStatusOrderByCreatedAtDesc(riderUid, "Completed");
+    }
+
+    @Transactional
+    public Ride acceptRide(Long rideId, String driverUid) {
+        // Fetch the ride record
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new NoSuchElementException("Ride not found with id: " + rideId));
+
+        // Check if ride is still in a status where it can be accepted (e.g., "Requested")
+        if (!"Requested".equals(ride.getStatus())) {
+            throw new IllegalStateException("Ride already accepted or not available for acceptance");
+        }
+
+        // Update ride with driver's UID and new status
+        ride.setDriverUid(driverUid);
+        ride.setStatus("Accepted");
+        ride.setUpdatedAt(LocalDateTime.now());
+
+        try {
+            return rideRepository.save(ride);
+        } catch (OptimisticLockingFailureException e) {
+            throw new RuntimeException("Ride was updated by another request. Please try again.", e);
+        }
+    }
+
+    public List<Ride> getAvailableRides() {
+        return rideRepository.findByStatus("Requested");
     }
 }

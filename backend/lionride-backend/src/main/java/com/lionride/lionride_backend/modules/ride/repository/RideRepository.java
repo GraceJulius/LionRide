@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface RideRepository extends JpaRepository<Ride, Long> {
     List<Ride> findTop5ByRiderUidAndStatusOrderByCreatedAtDesc(String riderUid, String status);
+    List<Ride> findByStatus(String status);
 }
