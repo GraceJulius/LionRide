@@ -6,6 +6,7 @@ import com.lionride.lionride_backend.modules.ride.model.Ride;
 import com.lionride.lionride_backend.modules.ride.service.RideService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/rides")
@@ -100,6 +102,34 @@ public class RideController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error retrieving ride history: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<?> getAvailableRides() {
+        try {
+            List<Ride> availableRides = rideService.getAvailableRides();
+            return ResponseEntity.ok(availableRides);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error fetching available rides: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{rideId}/accept")
+    public ResponseEntity<?> acceptRide(@PathVariable Long rideId, HttpServletRequest request) {
+        try {
+            // Extract the driver's UID from the authenticated request.
+            String driverUid = extractUid(request);
+            // Delegate the acceptance logic to the service layer.
+            Ride acceptedRide = rideService.acceptRide(rideId, driverUid);
+            return ResponseEntity.ok(acceptedRide);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error accepting ride: " + e.getMessage());
         }
     }
 }
