@@ -146,4 +146,38 @@ public class RideController {
                     .body("Error retrieving ride progress: " + e.getMessage());
         }
     }
+
+    @PutMapping("/{rideId}/start")
+    public ResponseEntity<?> startRide(@PathVariable Long rideId) {
+        try {
+            Ride ride = rideService.startRide(rideId);
+            return ResponseEntity.ok(ride);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error starting ride: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{rideId}/complete")
+    public ResponseEntity<?> completeRide(@PathVariable Long rideId) {
+        try {
+            Ride ride = rideService.completeRide(rideId);
+            return ResponseEntity.ok(ride);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error completing ride: " + e.getMessage());
+        }
+    }
 }
