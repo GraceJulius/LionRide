@@ -46,6 +46,12 @@ public class Ride {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name="start_time")
+    private LocalDateTime startTime;
+
+    @Column(name="end_time")
+    private LocalDateTime endTime;
+
     @Version
     private Long version;
 

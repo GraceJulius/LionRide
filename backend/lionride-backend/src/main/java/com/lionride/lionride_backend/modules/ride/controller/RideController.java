@@ -132,4 +132,18 @@ public class RideController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error accepting ride: " + e.getMessage());
         }
     }
+
+    @GetMapping("/{rideId}/progress")
+    public ResponseEntity<?> getRideProgress(@PathVariable Long rideId) {
+        try {
+            Map<String, Object> progress = rideService.getRideProgress(rideId);
+            return ResponseEntity.ok(progress);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving ride progress: " + e.getMessage());
+        }
+    }
 }
