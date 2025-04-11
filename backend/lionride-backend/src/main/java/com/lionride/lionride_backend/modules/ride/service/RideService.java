@@ -1,7 +1,11 @@
 package com.lionride.lionride_backend.modules.ride.service;
 
+import com.lionride.lionride_backend.modules.driver.service.DriverService;
+import com.lionride.lionride_backend.modules.ride.dto.DriverPublicDTO;
+import com.lionride.lionride_backend.modules.ride.dto.RideResponseDTO;
 import com.lionride.lionride_backend.modules.ride.model.Ride;
 import com.lionride.lionride_backend.modules.ride.repository.RideRepository;
+import com.lionride.lionride_backend.modules.user.service.UserService;
 import com.lionride.lionride_backend.utility.Coordinates;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +32,12 @@ public class RideService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private DriverService driverService;
+
+    @Autowired
+    private UserService userService;
 
     // Load the Google Maps API key from the environment variable
     private final String googleMapsApiKey = System.getenv("GOOGLE_MAPS_API_KEY");
@@ -255,5 +265,78 @@ public class RideService {
         // For demo purposes, since we don't have the driver's location,
         // return a constant coordinate (e.g., San Francisco).
         return new Coordinates(39.8036, -75.9229);
+    }
+
+    @Transactional
+    public RideResponseDTO acceptRideWithDriverDetails(Long rideId, String driverUid) {
+        // First accept the ride
+        Ride acceptedRide = acceptRide(rideId, driverUid);
+
+        // Fetch driver details from the driver module
+        var driver = driverService.getDriverByUid(driverUid);
+
+        // Fetch driver public details from the user module
+        var user = userService.getUser(driverUid);
+
+        // Build the public driver DTO using data from both modules.
+        DriverPublicDTO driverPublicDTO = new DriverPublicDTO();
+        driverPublicDTO.setUid(driverUid);
+        driverPublicDTO.setName(user.getFirstName() + " " + user.getLastName());
+        driverPublicDTO.setVehicleMake(driver.getVehicleMake());
+        driverPublicDTO.setVehicleModel(driver.getVehicleModel());
+        driverPublicDTO.setLicensePlate(driver.getLicensePlate());
+
+        return getRideResponseDTO(acceptedRide, driverPublicDTO);
+    }
+
+    private static RideResponseDTO getRideResponseDTO(Ride acceptedRide, DriverPublicDTO driverPublicDTO) {
+        RideResponseDTO rideResponseDTO = new RideResponseDTO();
+        rideResponseDTO.setRideId(acceptedRide.getRideId());
+        rideResponseDTO.setRiderUid(acceptedRide.getRiderUid());
+        rideResponseDTO.setDriverUid(acceptedRide.getDriverUid());
+        rideResponseDTO.setPickupAddress(acceptedRide.getPickupAddress());
+        rideResponseDTO.setDestinationAddress(acceptedRide.getDestinationAddress());
+        rideResponseDTO.setEstimatedFare(acceptedRide.getEstimatedFare());
+        rideResponseDTO.setStatus(acceptedRide.getStatus());
+        rideResponseDTO.setCreatedAt(acceptedRide.getCreatedAt());
+        rideResponseDTO.setUpdatedAt(acceptedRide.getUpdatedAt());
+        rideResponseDTO.setDriverDetails(driverPublicDTO);
+        return rideResponseDTO;
+    }
+
+    public RideResponseDTO getRideDetails(Long rideId) throws Exception {
+        // Retrieve the Ride entity.
+        Ride ride = getRide(rideId);
+
+        // Create a new DTO and copy over the ride data.
+        RideResponseDTO dto = new RideResponseDTO();
+        dto.setRideId(ride.getRideId());
+        dto.setRiderUid(ride.getRiderUid());
+        dto.setPickupAddress(ride.getPickupAddress());
+        dto.setDestinationAddress(ride.getDestinationAddress());
+        dto.setEstimatedFare(ride.getEstimatedFare());
+        dto.setStatus(ride.getStatus());
+        dto.setCreatedAt(ride.getCreatedAt());
+        dto.setUpdatedAt(ride.getUpdatedAt());
+
+        // If a driver has been assigned, merge public driver details into the DTO.
+        if (ride.getDriverUid() != null && !ride.getDriverUid().isEmpty()) {
+            // Retrieve driver details from the driver module. (Assume driverService.getDriverByUid returns the Driver entity.)
+            var driver = driverService.getDriverByUid(ride.getDriverUid());
+            // Retrieve public user details (e.g., for the driver's name and contact information)
+            var user = userService.getUser(ride.getDriverUid());
+
+            // Create a DTO for public driver details.
+            DriverPublicDTO driverDetails = new DriverPublicDTO();
+            driverDetails.setUid(ride.getDriverUid());
+            driverDetails.setName(user.getFirstName() + " " + user.getLastName());
+            driverDetails.setVehicleMake(driver.getVehicleMake());
+            driverDetails.setVehicleModel(driver.getVehicleModel());
+            driverDetails.setLicensePlate(driver.getLicensePlate());
+
+            dto.setDriverDetails(driverDetails);
+        }
+
+        return dto;
     }
 }
