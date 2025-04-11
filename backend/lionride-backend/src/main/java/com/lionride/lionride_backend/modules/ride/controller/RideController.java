@@ -2,6 +2,7 @@ package com.lionride.lionride_backend.modules.ride.controller;
 
 import com.google.firebase.auth.FirebaseToken;
 import com.lionride.lionride_backend.firebase.service.FirebaseAuthService;
+import com.lionride.lionride_backend.modules.ride.dto.RideResponseDTO;
 import com.lionride.lionride_backend.modules.ride.model.Ride;
 import com.lionride.lionride_backend.modules.ride.service.RideService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,6 +66,19 @@ public class RideController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(404).body("Ride not found: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{rideId}/details")
+    public ResponseEntity<?> getRideDetails(@PathVariable Long rideId) {
+        try {
+            // This method constructs a DTO that merges the raw ride details with the public driver details.
+            RideResponseDTO rideResponse = rideService.getRideDetails(rideId);
+            return ResponseEntity.ok(rideResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Ride not found: " + e.getMessage());
         }
     }
 
