@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -44,6 +45,15 @@ public class Ride {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name="start_time")
+    private LocalDateTime startTime;
+
+    @Column(name="end_time")
+    private LocalDateTime endTime;
+
+    @Version
+    private Long version;
 
     // Custom no-args constructor to set default values.
     public Ride() {

@@ -198,9 +198,8 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 gap-4">
                     {rideHistory.map((ride) => (
                         <div key={ride.rideId} className="p-4 border rounded-md shadow-md">
-                            <h3 className="text-lg font-semibold">Ride #{ride.rideId}</h3>
-                            <p><strong>From:</strong> {ride.pickupAddress}</p>
-                            <p><strong>To:</strong> {ride.destinationAddress}</p>
+                            <p><strong>Pickup:</strong> {ride.pickupAddress}</p>
+                            <p><strong>Destination:</strong> {ride.destinationAddress}</p>
                             <p><strong>Fare:</strong> ${ride.estimatedFare}</p>
                             <p className="text-sm text-gray-500">
                                 {new Date(ride.createdAt).toLocaleString()}

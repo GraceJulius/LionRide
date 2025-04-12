@@ -26,9 +26,6 @@ export default function Login() {
       // Store token securely (use context or HTTP-only cookies in production)
       localStorage.setItem("token", idToken);
 
-<<<<<<< Updated upstream
-      router.push("/driver/profile"); // Redirect after successful login
-=======
       const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
       //check if driver profile exists
@@ -46,7 +43,6 @@ export default function Login() {
         toast.error("Complete your driver signup to accept rides.");
         router.push("/driver/signup");
       }
->>>>>>> Stashed changes
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     }

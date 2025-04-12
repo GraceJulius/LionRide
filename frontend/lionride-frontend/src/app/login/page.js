@@ -62,17 +62,7 @@ export default function Login() {
             required
             className="w-full p-2 border rounded mb-4"
           />
-
-          {/* updated the button */}
-          <button 
-          type="submit" 
-          disabled={loading}
-          className={`w-full py-2 rounded text-white ${loading ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500'}`}>
-<<<<<<< Updated upstream
-          {/* {loading ? 'Logging in...' : 'Login'} */}
-=======
-          {/* {loading ? 'Login'} */}
->>>>>>> Stashed changes
+          <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded">
             Login
           </button>
 

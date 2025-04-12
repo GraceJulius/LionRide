@@ -36,7 +36,7 @@ export default function RideDetailsPage() {
 
     try {
       const response = await fetch(`${baseUrl}/api/v1/rides/${rideId}/cancel`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

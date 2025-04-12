@@ -2,10 +2,12 @@ package com.lionride.lionride_backend.modules.ride.controller;
 
 import com.google.firebase.auth.FirebaseToken;
 import com.lionride.lionride_backend.firebase.service.FirebaseAuthService;
+import com.lionride.lionride_backend.modules.ride.dto.RideResponseDTO;
 import com.lionride.lionride_backend.modules.ride.model.Ride;
 import com.lionride.lionride_backend.modules.ride.service.RideService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/rides")
@@ -66,6 +69,19 @@ public class RideController {
         }
     }
 
+    @GetMapping("/{rideId}/details")
+    public ResponseEntity<?> getRideDetails(@PathVariable Long rideId) {
+        try {
+            // This method constructs a DTO that merges the raw ride details with the public driver details.
+            RideResponseDTO rideResponse = rideService.getRideDetails(rideId);
+            return ResponseEntity.ok(rideResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Ride not found: " + e.getMessage());
+        }
+    }
+
     @PutMapping("/{rideId}/status")
     public ResponseEntity<?> updateRideStatus(@PathVariable Long rideId, @RequestBody Map<String, String> payload) {
         try {
@@ -100,6 +116,82 @@ public class RideController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error retrieving ride history: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<?> getAvailableRides() {
+        try {
+            List<Ride> availableRides = rideService.getAvailableRides();
+            return ResponseEntity.ok(availableRides);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error fetching available rides: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{rideId}/accept")
+    public ResponseEntity<?> acceptRide(@PathVariable Long rideId, HttpServletRequest request) {
+        try {
+            // Extract the driver's UID from the authenticated request.
+            String driverUid = extractUid(request);
+            // Delegate the acceptance logic to the service layer.
+            Ride acceptedRide = rideService.acceptRide(rideId, driverUid);
+            return ResponseEntity.ok(acceptedRide);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error accepting ride: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{rideId}/progress")
+    public ResponseEntity<?> getRideProgress(@PathVariable Long rideId) {
+        try {
+            Map<String, Object> progress = rideService.getRideProgress(rideId);
+            return ResponseEntity.ok(progress);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving ride progress: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{rideId}/start")
+    public ResponseEntity<?> startRide(@PathVariable Long rideId) {
+        try {
+            Ride ride = rideService.startRide(rideId);
+            return ResponseEntity.ok(ride);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error starting ride: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{rideId}/complete")
+    public ResponseEntity<?> completeRide(@PathVariable Long rideId) {
+        try {
+            Ride ride = rideService.completeRide(rideId);
+            return ResponseEntity.ok(ride);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error completing ride: " + e.getMessage());
         }
     }
 }
