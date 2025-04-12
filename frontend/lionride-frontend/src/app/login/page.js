@@ -10,6 +10,8 @@ export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const router = useRouter();
+  //loading state
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,6 +32,9 @@ export default function Login() {
       router.push("/dashboard"); // Redirect after successful login
     } catch (err) {
       setError("Invalid email or password. Please try again.");
+    } //for loading
+    finally{
+      setLoading(false);
     }
   };
 
@@ -57,9 +62,16 @@ export default function Login() {
             required
             className="w-full p-2 border rounded mb-4"
           />
-          <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded">
+
+          {/* updated the button */}
+          <button 
+          type="submit" 
+          disabled={loading}
+          className={`w-full py-2 rounded text-white ${loading ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500'}`}>
+          {/* {loading ? 'Login'} */}
             Login
           </button>
+
         </form>
         <p className="text-center mt-4 text-sm">
           Do not have an account? <a href="/signup" className="text-orange-500">Sign Up</a>
