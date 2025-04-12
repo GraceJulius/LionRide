@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { GoogleMap, DirectionsRenderer, useJsApiLoader } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  DirectionsRenderer,
+  Marker,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 
 const mapContainerStyle = {
   width: "100%",
@@ -13,6 +18,7 @@ export default function RideDetailsPage() {
   const { rideId } = useParams();
   const router = useRouter();
   const [ride, setRide] = useState(null);
+  const [driverLocation, setDriverLocation] = useState(null);
   const [directions, setDirections] = useState(null);
   const [error, setError] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
@@ -45,7 +51,6 @@ export default function RideDetailsPage() {
       });
 
       if (!response.ok) throw new Error("Failed to cancel ride");
-
       router.push("/dashboard");
     } catch (err) {
       console.error("Cancel error:", err);
@@ -70,52 +75,65 @@ export default function RideDetailsPage() {
       if (!response.ok) throw new Error("Failed to request ride");
 
       alert("Ride Requested Successfully");
-
     } catch (err) {
       console.error("Request error:", err);
       alert("Could not request ride.");
     }
   };
 
-  // Poll ride status every 5 sec
+  // Fetch ride details with driver info if assigned
+  const fetchRide = async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    try {
+      const res = await fetch(`${baseUrl}/api/v1/rides/${rideId}/details`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch ride");
+
+      const data = await res.json();
+      setRide(data);
+    } catch (err) {
+      setError("Unable to fetch ride info");
+      console.error(err);
+    }
+  };
+
+  // Ride status polling
   useEffect(() => {
-    if (!rideId) return;
+    fetchRide(); // Initial fetch
 
     const interval = setInterval(async () => {
       const token = localStorage.getItem("token");
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
       try {
-        const response = await fetch(`${baseUrl}/api/v1/rides/${rideId}`, {
+        const response = await fetch(`${baseUrl}/api/v1/rides/${rideId}/details`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (!response.ok) throw new Error("Failed to fetch ride");
 
         const updatedRide = await response.json();
         setRide(updatedRide);
 
-        console.log("Polling ride status:", updatedRide.status);
-
         if (updatedRide.status === "Accepted") {
-          clearInterval(interval);
-          router.push(`/ride/${rideId}/driver`);
+          console.log("Driver accepted the ride");
         }
 
         if (updatedRide.status === "Completed") {
           clearInterval(interval);
           router.push(`/ride/${rideId}/summary`);
         }
-
       } catch (err) {
         console.error("Ride polling error:", err);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [rideId, ride?.status]);
+  }, [rideId]);
 
-  // Poll driver progress every 5 sec
+  // Poll driver progress
   useEffect(() => {
     if (!ride) return;
 
@@ -124,20 +142,28 @@ export default function RideDetailsPage() {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
       try {
-        const response = await fetch(`${baseUrl}/api/v1/rides/${rideId}/progress`, {
+        const res = await fetch(`${baseUrl}/api/v1/rides/${rideId}/progress`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) throw new Error("Failed to fetch ride progress");
-
-        const progressData = await response.json();
+        const progressData = await res.json();
 
         if (progressData.driverLocation) {
+          const { lat, lng } = progressData.driverLocation;
+          const driverPos = { lat, lng };
+          setDriverLocation(driverPos);
+
           const directionsService = new window.google.maps.DirectionsService();
+
+          const destination =
+            ride.status === "InProgress"
+              ? ride.destinationAddress
+              : ride.pickupAddress;
+
           directionsService.route(
             {
-              origin: progressData.driverLocation,
-              destination: ride.pickupAddress,
+              origin: driverPos,
+              destination: destination,
               travelMode: window.google.maps.TravelMode.DRIVING,
             },
             (result, status) => {
@@ -147,7 +173,6 @@ export default function RideDetailsPage() {
             }
           );
         }
-
       } catch (err) {
         console.error("Progress polling error:", err);
       }
@@ -180,14 +205,24 @@ export default function RideDetailsPage() {
           <p className="mt-3 text-xl font-bold text-blue-700 dark:text-orange-300">
             Estimated Fare: ${ride.estimatedFare}
           </p>
+
+          {ride.driverDetails && (
+            <div className="mt-4 border-t pt-4 text-sm text-gray-700 dark:text-gray-300">
+              <p className="font-semibold mb-1">Driver Assigned:</p>
+              <p>Name: {ride.driverDetails.name}</p>
+              <p>Vehicle: {ride.driverDetails.vehicleMake} {ride.driverDetails.vehicleModel}</p>
+              <p>Plate: {ride.driverDetails.licensePlate}</p>
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md">
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
-            zoom={13}
-            center={{ lat: 39.809, lng: -75.931 }}
+            zoom={15}
+            center={driverLocation || { lat: 39.809, lng: -75.931 }}
           >
+            {driverLocation && <Marker position={driverLocation} />}
             {directions && <DirectionsRenderer directions={directions} />}
           </GoogleMap>
         </div>
