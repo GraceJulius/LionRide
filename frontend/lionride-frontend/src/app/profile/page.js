@@ -113,6 +113,7 @@ export default function Profile() {
   // Logout functionality
   const handleLogout = () => {
     localStorage.removeItem("token"); // Clear the token
+    setUser(null); //clear user state from frontend
     router.push("/login"); // Redirect to login page
   };
 

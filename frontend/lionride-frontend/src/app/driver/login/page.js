@@ -26,7 +26,27 @@ export default function Login() {
       // Store token securely (use context or HTTP-only cookies in production)
       localStorage.setItem("token", idToken);
 
+<<<<<<< Updated upstream
       router.push("/driver/profile"); // Redirect after successful login
+=======
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+      //check if driver profile exists
+      const driverProfileRes = await fetch(`${baseURL}/api/v1/driver/profile`,{
+        headers:{
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+      
+      if (driverProfileRes.ok){ 
+      router.push("/driver/dashboard"); // driver profile found, go to dashboard
+      }
+      else {
+        //if driver profile is not found, redirect to register
+        toast.error("Complete your driver signup to accept rides.");
+        router.push("/driver/signup");
+      }
+>>>>>>> Stashed changes
     } catch (err) {
       setError("Invalid email or password. Please try again.");
     }

@@ -22,6 +22,8 @@ export default function DriverSignup() {
 
   const [error, setError] = useState("");
   const router = useRouter();
+  //loading state for when submitted
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,6 +42,7 @@ export default function DriverSignup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); //shows loading immediately
     const {
       firstName,
       lastName,
@@ -113,6 +116,8 @@ export default function DriverSignup() {
       router.push("/driver/login");
     } catch (err) {
       setError(err.message);
+    } finally{
+      setLoading(false); //hides loading regardless of success or error
     }
   };
 
@@ -212,8 +217,12 @@ export default function DriverSignup() {
             required 
             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" />
 
-          <button type="submit" className="w-full bg-orange-500 text-white px-4 py-2 rounded-md">
-            Sign Up
+          <button 
+          type="submit"
+          //updated to prevent the user from pressing the submit button multiple times
+          disabled={loading}
+          className= { `w-full px-4 py-2 rounded-md text-white ${loading ?  "bg-orange-500 cursor-not-allowed" : "bg-orange-500"}`}>
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
         </form>
 
