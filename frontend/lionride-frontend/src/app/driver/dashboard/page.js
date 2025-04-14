@@ -27,9 +27,17 @@ export default function DriverDashboard() {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
+        /* updated so there can be a check to see if driver's 
+         profile exists when fetching it*/
 
-        if (!userRes.ok || !driverRes.ok)
-          throw new Error("Failed to load profile");
+        if (!userRes.ok )
+          throw new Error("Failed to load user profile");
+        if (!driverRes.ok){
+          /*if driver profile is not found, will redirect to
+          signup page*/
+          router.push("/driver/signup");
+          return;
+        }
 
         const userData = await userRes.json();
         const driverData = await driverRes.json();
@@ -96,6 +104,7 @@ export default function DriverDashboard() {
       }
       // Navigate to the ride details/navigation page upon successful acceptance
       // router.push(`/driver/ride/${rideId}`);
+      router.push(`/driver/ride/${rideId}/progress`);
     } catch (err) {
       setError(err.message);
     }
@@ -111,7 +120,7 @@ export default function DriverDashboard() {
   const handleSave = async () => {
     try {
       const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-      const updateEndpoint = `${baseURL}/api/v1/driver/update`;
+      const updateEndpoint = `${baseURL}/api/v1/driver/profile`;
       const response = await fetch(updateEndpoint, {
         method: "PUT",
         headers: {
@@ -128,6 +137,7 @@ export default function DriverDashboard() {
     }
   };
 
+  //will probably remove this
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -222,7 +232,7 @@ export default function DriverDashboard() {
                 />
                 <button
                     onClick={handleSave}
-                    className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                    className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-blue-600"
                 >
                   Save
                 </button>
