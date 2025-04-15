@@ -58,7 +58,9 @@ LionRide is a student-focused ride-sharing platform built to help Lincoln Univer
 - Node.js
 - Java 17+
 - PostgreSQL
-- Firebase Project with Authentication Enabled### Clone Repository
+- Firebase Project with Authentication Enabled
+
+### Clone Repository
 ```bash
 git clone https://github.com/GraceJulius/LionRide.git
 cd LionRide
