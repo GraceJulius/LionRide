@@ -95,7 +95,6 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 ## Future Improvements
 - In-app Notifications
 - Real-time Chat between Rider & Driver
-- Admin Dashboard
 - Driver Rating & Feedback System
 - Dark/Light Theme Toggle
 - Payment Integration (Stripe)
